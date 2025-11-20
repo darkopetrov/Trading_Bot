@@ -207,8 +207,6 @@ indicator_list = [x.strip() for x in indicators_raw.split(",") if x.strip()]
 st.divider()
 st.header("3. Buy Logic & Sizing")
 
-buy_condition = st.text_input("Global Buy Trigger", "pct_profit < -0.05 or amount == 0", help="This must be TRUE for any buying to happen.")
-
 st.subheader("Dynamic Position Sizing")
 
 # Initialize session state with the new 'type' field
@@ -247,10 +245,6 @@ for i, rule in enumerate(st.session_state.buy_rules):
 b1, b2 = st.columns(2)
 b1.button("➕ Add Rule", on_click=add_rule)
 b2.button("➖ Remove Last", on_click=remove_rule)
-
-# Default Fallback (Always Cash based to keep it safe)
-st.markdown("**Else (Default):**")
-default_buy_size = st.number_input("Default Size (% Cash)", value=2.0, step=0.5)
 
 st.divider()
 st.header("4. Sell Logic")
@@ -352,43 +346,42 @@ if run:
                     }
 
                     # 3. EVALUATE BUY
-                    if evaluate_condition(row, buy_condition, context):
-                        if current_price <= 0: continue
-                        
-                        # --- NEW LOGIC START ---
-                        amount_to_buy = 0
-                        rule_matched = False
+                    if current_price <= 0: continue
+                    
+                    # --- NEW LOGIC START ---
+                    amount_to_buy = 0
+                    rule_matched = False
 
-                        # 1. Check Dynamic Rules
-                        for rule in st.session_state.buy_rules:
-                            if evaluate_condition(row, rule['cond'], context):
-                                
-                                size_val = rule['size'] / 100.0
-                                
-                                if rule['type'] == "% Position":
-                                    # BUY BASED ON EXISTING AMOUNT
-                                    # If Size is 100%, we buy exactly what we currently have (Doubling down)
-                                    current_amt = context['amount']
-                                    if current_amt > 0:
-                                        amount_to_buy = int(current_amt * size_val)
-                                    else:
-                                        # Fallback: If we have 0 shares, % Position implies 0 buy. 
-                                        # Force a tiny cash buy or skip? Let's skip to be safe.
-                                        amount_to_buy = 0 
+                    # 1. Check Dynamic Rules
+                    for rule in st.session_state.buy_rules:
+                        if evaluate_condition(row, rule['cond'], context):
+                            
+                            size_val = rule['size'] / 100.0
+                            
+                            if rule['type'] == "% Position":
+                                # BUY BASED ON EXISTING AMOUNT
+                                # If Size is 100%, we buy exactly what we currently have (Doubling down)
+                                current_amt = context['amount']
+                                if current_amt > 0:
+                                    amount_to_buy = int(current_amt * size_val)
                                 else:
-                                    # BUY BASED ON CASH (Standard)
-                                    amount_to_buy = int((wallet.cash * size_val) / current_price)
-                                
-                                rule_matched = True
-                                break # Stop after first match
+                                    # Fallback: If we have 0 shares, % Position implies 0 buy. 
+                                    # Force a tiny cash buy or skip? Let's skip to be safe.
+                                    amount_to_buy = 0 
+                            else:
+                                # BUY BASED ON CASH (Standard)
+                                amount_to_buy = int((wallet.cash * size_val) / current_price)
+                            
+                            rule_matched = True
+                            break # Stop after first match
 
-                        # 2. If no rule matched, use Default (% Cash)
-                        if not rule_matched:
-                            amount_to_buy = int((wallet.cash * (default_buy_size / 100.0)) / current_price)
-                        # --- NEW LOGIC END ---
+                    # 2. If no rule matched, do nothing.
+                    if not rule_matched:
+                        amount_to_buy = 0
+                    # --- NEW LOGIC END ---
 
-                        if amount_to_buy > 0:
-                            wallet.buy(ticker, current_price, amount_to_buy)
+                    if amount_to_buy > 0:
+                        wallet.buy(ticker, current_price, amount_to_buy)
                     
                     # 4. EVALUATE SELL
                     if amt > 0:
