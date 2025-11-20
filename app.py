@@ -424,7 +424,10 @@ if run:
             res_df = pd.DataFrame(history).set_index("Date")
             final_v = res_df["Portfolio Buy Value"].iloc[-1]
 
-            st.metric("Final Value", f"{final_v:,.2f} SEK", delta=f"{final_v - cash:,.2f}")
+            st.metric("Final Purchase Value", f"{final_v:,.2f} SEK", delta=f"{final_v - cash:,.2f}")
+            st.metric("Final Market Value", f"{total_m_val:,.2f} SEK", delta=f"{total_m_val - cash:,.2f}")
+            st.metric("Final Cash Left", f"{wallet.cash:,.2f} SEK", delta=f"{wallet.cash - cash:,.2f}")
+
 
             # --- CHART 1: Portfolio Value (Scaled) ---
             # We need to "melt" the dataframe to put multiple lines on one Altair chart
