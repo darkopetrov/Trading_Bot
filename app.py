@@ -207,8 +207,6 @@ indicator_list = [x.strip() for x in indicators_raw.split(",") if x.strip()]
 st.divider()
 st.header("3. Buy Logic & Sizing")
 
-st.subheader("Dynamic Position Sizing")
-
 # Initialize session state with the new 'type' field
 if 'buy_rules' not in st.session_state:
     st.session_state.buy_rules = [
