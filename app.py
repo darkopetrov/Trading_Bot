@@ -4,6 +4,56 @@ import pandas as pd
 import numpy as np
 import altair as alt
 
+TICKER_DATA = [
+    {"category": "Industrials", "name": "ABB", "ticker": "ABB.ST"},
+    {"category": "Technology", "name": "Addtech", "ticker": "ADDT-B.ST"},
+    {"category": "Industrials", "name": "Alfa Laval", "ticker": "ALFA.ST"},
+    {"category": "Automotive", "name": "Autoliv", "ticker": "ALIV-SDB.ST"},
+    {"category": "Industrials", "name": "Assa Abloy", "ticker": "ASSA-B.ST"},
+    {"category": "Industrials", "name": "Atlas Copco", "ticker": "ATCO-A.ST"},
+    {"category": "Healthcare", "name": "AstraZeneca", "ticker": "AZN.ST"},
+    {"category": "Mining", "name": "Boliden", "ticker": "BOL.ST"},
+    {"category": "Consumer Goods", "name": "Electrolux", "ticker": "ELUX-B.ST"},
+    {"category": "Industrials", "name": "Epiroc", "ticker": "EPI-A.ST"},
+    {"category": "Investment Company", "name": "EQT", "ticker": "EQT.ST"},
+    {"category": "Consumer Goods", "name": "Essity", "ticker": "ESSITY-B.ST"},
+    {"category": "Telecom", "name": "Ericsson", "ticker": "ERIC-B.ST"},
+    {"category": "Gaming", "name": "Evolution Gaming", "ticker": "EVO.ST"},
+    {"category": "Healthcare", "name": "Getinge", "ticker": "GETI-B.ST"},
+    {"category": "Banks", "name": "Handelsbanken", "ticker": "SHB-A.ST"},
+    {"category": "Technology", "name": "Hexagon", "ticker": "HEXA-B.ST"},
+    {"category": "Retail", "name": "H&M", "ticker": "HM-B.ST"},
+    {"category": "Basic Materials", "name": "Holmen", "ticker": "HOLM-B.ST"},
+    {"category": "Consumer Goods", "name": "Husqvarna", "ticker": "HUSQ-B.ST"},
+    {"category": "Investment Company", "name": "Industrivärden", "ticker": "INDU-C.ST"},
+    {"category": "Investment Company", "name": "Investor AB", "ticker": "INVE-B.ST"},
+    {"category": "Investment Company", "name": "Kinnevik", "ticker": "KINV-B.ST"},
+    {"category": "Investment Company", "name": "Lifco", "ticker": "LIFCO-B.ST"},
+    {"category": "Banks", "name": "Nordea", "ticker": "NDA-SE.ST"},
+    {"category": "Industrials", "name": "NIBE Industrier", "ticker": "NIBE-B.ST"},
+    {"category": "Aerospace & Defense", "name": "Saab", "ticker": "SAAB-B.ST"},
+    {"category": "Real Estate", "name": "Samhällsbyggnadsbolaget", "ticker": "SBB-B.ST"},
+    {"category": "Industrials", "name": "Sandvik", "ticker": "SAND.ST"},
+    {"category": "Basic Materials", "name": "SCA", "ticker": "SCA-B.ST"},
+    {"category": "Banks", "name": "SEB", "ticker": "SEB-A.ST"},
+    {"category": "Industrials", "name": "Securitas", "ticker": "SECU-B.ST"},
+    {"category": "Industrials", "name": "SKF", "ticker": "SKF-B.ST"},
+    {"category": "Construction", "name": "Skanska", "ticker": "SKA-B.ST"},
+    {"category": "Banks", "name": "Swedbank", "ticker": "SWED-A.ST"},
+    {"category": "Telecom", "name": "Tele2", "ticker": "TEL2-B.ST"},
+    {"category": "Telecom", "name": "Telia Company", "ticker": "TELIA.ST"},
+    {"category": "Automotive", "name": "Volvo", "ticker": "VOLV-B.ST"},
+]
+# Sort by category then name for a structured dropdown
+TICKER_DATA.sort(key=lambda x: (x['category'], x['name']))
+
+# Pre-made categories
+PREDEFINED_CATEGORIES = {
+    "ALL": [item['ticker'] for item in TICKER_DATA],
+    "OMXS30": ["ABB.ST", "ADDT-B.ST", "ALFA.ST", "ASSS-B.ST", "AZN.ST", "ATCO-A.ST", "BOL.ST", "EPI-A.ST", "EQT.ST", "ERIC-B.ST", "ESSITY-B.ST", "EVO.ST", "HM-B.ST", "SHB-A.ST", "HEXA-B.ST", "INDU-C.ST", "INVE-B.ST", "LIFCO-B.ST", "NIBE-B.ST", "NDA-SE.ST", "SAAB-B.ST", "SAND.ST", "SCA-B.ST", "SEB-A.ST", "SKA-B.ST", "SKF-B.ST", "SWED-A.ST", "TEL2-B.ST", "TELIA.ST", "VOLV-B.ST"]
+    # Can add more categories like "DAX", "S&P 500" here later
+}
+
 # -----------------------------------------------------------------------------
 # 1. SMART WALLET (With Memory for Trailing Stops)
 # -----------------------------------------------------------------------------
@@ -192,7 +242,36 @@ with st.expander("📚 Variable Cheat Sheet (Click to Expand)"):
 
 # --- INPUT SECTION ---
 st.header("1. Setup")
-tickers_input = st.multiselect("Tickers", ["AZN.ST", "EVO.ST", "VOLV-B.ST", "TELIA.ST", "SKF-B.ST", "NDA-SE.ST", "ESSITY-B.ST", "HEXA-B.ST", "TEL2-B.ST", "SWED-A.ST", "ERIC-B.ST", "HM-B.ST", "ATCO-A.ST", "SHB-A.ST", "SCA-B.ST", "INVE-B.ST", "ALFA.ST", "ASSA-B.ST", "SEB-A.ST", "EPI-A.ST", "SAND.ST", "ADDT-B.ST", "EQT.ST", "NIBE-B.ST", "INDU-C.ST", "LIFCO-B.ST", "BOL.ST", "SKA-B.ST", "SAAB-B.ST", "ABB.ST"], ["VOLV-B.ST"])
+
+# Create a list of display names for the multiselect, including category
+ticker_display_list = [f"[{item['category']}] {item['name']} ({item['ticker']})" for item in TICKER_DATA]
+
+# Create a mapping from display name to ticker
+ticker_map = {f"[{item['category']}] {item['name']} ({item['ticker']})": item['ticker'] for item in TICKER_DATA}
+
+# Create a reverse map from ticker to display name to easily find display names
+ticker_to_display_map = {v: k for k, v in ticker_map.items()}
+
+# --- Category Selection ---
+category_options = ["Custom"] + list(PREDEFINED_CATEGORIES.keys())
+selected_category = st.selectbox("Ticker Category", category_options)
+
+default_selection = []
+if selected_category == "Custom":
+    # Default to Volvo if custom is selected, for a better user experience
+    default_ticker = "VOLV-B.ST"
+    default_display = [item for item in ticker_display_list if default_ticker in item]
+    default_selection = default_display
+else:
+    # Get tickers for the selected category and map them to their display names
+    category_tickers = PREDEFINED_CATEGORIES[selected_category]
+    default_selection = [ticker_to_display_map[ticker] for ticker in category_tickers if ticker in ticker_to_display_map]
+
+tickers_display_input = st.multiselect("Tickers", ticker_display_list, default=default_selection)
+
+# Convert selected display names back to tickers
+tickers_input = [ticker_map[display] for display in tickers_display_input]
+
 start_d = st.date_input("Start", pd.to_datetime("2022-01-01"))
 end_d = st.date_input("End", pd.to_datetime("2023-12-01"))
 
