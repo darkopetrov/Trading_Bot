@@ -65,12 +65,19 @@ class Wallet:
                 self.stocks[ticker]['amount'] = remaining
                 # We do NOT reset avg_price or max_price on partial sells usually
 
-    def get_total_value(self, current_prices):
+    def get_total_market_value(self, current_prices):
         val = self.cash
         for ticker, data in self.stocks.items():
             price = current_prices.get(ticker, data['avg_price'])
             val += data['amount'] * price
         return val
+    
+    def get_total_buy_value(self):
+        val = 0.0
+        for ticker, data in self.stocks.items():
+            val += data['amount'] * data['avg_price']
+        val = val + self.cash
+        return val 
 
 # -----------------------------------------------------------------------------
 # 2. DATA ENGINE
@@ -174,15 +181,13 @@ indicator_list = [x.strip() for x in indicators_raw.split(",") if x.strip()]
 
 st.divider()
 st.header("3. Buy Logic")
-buy_condition = st.text_input("Buy Condition", "close > sma_200 and rsi_14 < 30")
-buy_size_pct = st.number_input("Buy Size (% of Cash)", value=10.0, step=1.0) / 100.0
+buy_condition = st.text_input("Buy Condition", "pct_profit < -0.05 or amount == 0")
+buy_size_pct = st.number_input("Buy Size (% of Cash)", value=5.0, step=1.0) / 100.0
 
 st.divider()
 st.header("4. Sell Logic")
 st.markdown("Use variables: `pct_profit`, `avg_price`, `max_price`")
-
-# Allow multiple OR conditions by chaining them in one line or simply complex logic
-sell_condition = st.text_input("Sell Condition", "pct_profit < -0.05 or close < max_price * 0.90")
+sell_condition = st.text_input("Sell Condition", "pct_profit < 0.05")
 sell_size_pct = st.number_input("Sell Size (% of Holding)", value=100.0, step=10.0) / 100.0
 
 run = st.button("Run Simulation", type="primary")
@@ -206,6 +211,7 @@ if run:
             
             wallet = Wallet(cash)
             history = []
+            close_prices_history = []
             common_index = data_map[tickers_input[0]].index
             
             progress = st.progress(0)
@@ -264,18 +270,33 @@ if run:
                                 wallet.sell(ticker, current_price, amount_to_sell)
 
                 # Log
-                total_val = wallet.get_total_value(current_prices_snapshot)
-                history.append({"Date": date, "Portfolio Value": total_val, "Cash": wallet.cash})
+                total_m_val = wallet.get_total_market_value(current_prices_snapshot)
+                total_b_val = wallet.get_total_buy_value()
+                history.append({"Date": date, "Portfolio Market Value": total_m_val, "Portfolio Buy Value": total_b_val, "Cash": wallet.cash})
+                # close_prices_history.append({**{"Date": date}, **current_prices_snapshot})
+
+                
             
             progress.empty()
             
             # VISUALIZATION
             res_df = pd.DataFrame(history).set_index("Date")
-            final_v = res_df["Portfolio Value"].iloc[-1]
+            final_v = res_df["Portfolio Buy Value"].iloc[-1]
+            # c_p_df = pd.DataFrame(close_prices_history).set_index("Date")
+            
             
             st.metric("Final Value", f"{final_v:,.2f} SEK", delta=f"{final_v - cash:,.2f}")
+            st.line_chart(res_df[["Portfolio Market Value", "Portfolio Buy Value"]])
+            if len(tickers_input) <=1:
+                aaa = []
+                for i in range(len(raw_df.index)):
+                    aaa.append({"Date": raw_df.index[i], "Price":raw_df['Close'][tickers_input[0]].iloc[i]})
+                aaa = pd.DataFrame(aaa).set_index("Date")
+                st.line_chart(aaa[["Price"]])
+            # else:
+            #     st.line_chart(raw_df['Close'][tickers_input])
+            st.line_chart(res_df[["Cash"]])
             
-            st.line_chart(res_df[["Portfolio Value", "Cash"]])
             
             if wallet.stocks:
                 st.subheader("Ending Portfolio")
