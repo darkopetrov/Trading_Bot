@@ -6,8 +6,8 @@ import altair as alt
 from datetime import date
 from TICKER_DATA import TICKER_DATA
 
-# Sort by category then name for a structured dropdown
-TICKER_DATA.sort(key=lambda x: (x['category'], x['name']))
+# Sort by name for a structured dropdown
+TICKER_DATA.sort(key=lambda x: ( x['name']))
 
 # Pre-made categories
 PREDEFINED_CATEGORIES = {
@@ -229,10 +229,10 @@ with st.expander("📚 Variable Cheat Sheet (Click to Expand)"):
 st.header("1. Setup")
 
 # Create a list of display names for the multiselect, including category
-ticker_display_list = [f"[{item['category']}] {item['name']} ({item['ticker']})" for item in TICKER_DATA]
+ticker_display_list = [f"{item['name']} ({item['ticker']})" for item in TICKER_DATA]
 
 # Create a mapping from display name to ticker
-ticker_map = {f"[{item['category']}] {item['name']} ({item['ticker']})": item['ticker'] for item in TICKER_DATA}
+ticker_map = {f"{item['name']} ({item['ticker']})": item['ticker'] for item in TICKER_DATA}
 
 # Create a reverse map from ticker to display name to easily find display names
 ticker_to_display_map = {v: k for k, v in ticker_map.items()}
