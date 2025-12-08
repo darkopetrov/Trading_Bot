@@ -11,8 +11,8 @@ FOLDER_PATH = 'finnance_data'
 SEQUENCE_LENGTH = 60 # Number of past days the LSTM looks at
 EPOCHS = 50 
 BATCH_SIZE = 32
-FEATURE_COLUMNS = ['Return', 'Volume', 'RSI', 'MACD_Hist']
-MODEL_FILENAME = './models/best_stock_predictor.keras'
+FEATURE_COLUMNS = ['Return', 'Volume', 'RSI', 'MACD_Hist', "Close", "Open", "High", "Low"]
+MODEL_FILENAME = './models/return_best_stock_predictor.keras'
 
 # --- 1. Feature Engineering Function ---
 def add_technical_indicators(df):
