@@ -2,9 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+import tensorflow as tf
 
 # --- Configuration ---
 FOLDER_PATH = 'finnance_data'
@@ -133,19 +131,19 @@ else:
 
     # 4. Model Definition
     print("Building LSTM Model...")
-    model = Sequential()
-    model.add(Input(shape=input_shape))
-    model.add(LSTM(units=100, return_sequences=False))
-    model.add(Dropout(0.3))
-    model.add(Dense(units=1, activation='sigmoid'))
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.Input(shape=input_shape))
+    model.add(tf.keras.layers.LSTM(units=100, return_sequences=False))
+    model.add(tf.keras.layers.Dropout(0.3))
+    model.add(tf.keras.layers.Dense(units=1, activation='sigmoid'))
 
     model.compile(optimizer='adam', 
                     loss='binary_crossentropy', 
                     metrics=['accuracy'])
 
     # 5. Callbacks (Early Stopping and Checkpoints)
-    early_stop = EarlyStopping(monitor='val_loss', patience=7, restore_best_weights=True, verbose=1)
-    checkpoint = ModelCheckpoint(filepath=MODEL_FILENAME, monitor='val_loss', save_best_only=True, verbose=1)
+    early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=7, restore_best_weights=True, verbose=1)
+    checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=MODEL_FILENAME, monitor='val_loss', save_best_only=True, verbose=1)
 
     # 6. Training
     print("Starting training...")

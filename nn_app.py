@@ -7,7 +7,7 @@ from datetime import date
 from TICKER_DATA import TICKER_DATA
 import os
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import load_model
+import tensorflow as tf
 
 # --- Configuration ---
 FEATURE_COLUMNS = ['Return', 'Volume', 'RSI', 'MACD_Hist', "Close", "Open", "High", "Low"]
@@ -116,7 +116,7 @@ def load_nn_model(model_path):
     if not os.path.exists(model_path):
         st.error(f"Model file not found at: {model_path}")
         return None
-    return load_model(model_path)
+    return tf.keras.models.load_model(model_path)
 
 def pre_calculate_features(df, ticker):
     # df.columns = [c.lower() for c in df.columns]
